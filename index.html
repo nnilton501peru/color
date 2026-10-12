@@ -211,18 +211,37 @@ function dibujar(){
   // Ajuste de líneas (misma lógica de siempre)
   ctx.font = `${grosor} ${tamano}px ${fuente}`;
   let lineas = [];
-  texto.split('\n').forEach(p => {
-    const palabras = p.split(' ');
-    let linea = (palabras[0] || '').trim();
-    for(let i = 1; i < palabras.length; i++){
-      if(ctx.measureText(linea + ' ' + palabras[i]).width < maxWidth){
-        linea += ' ' + palabras[i];
+
+  // Si una palabra (link, emoji, etc.) es más ancha que la imagen, la corta por letras
+  function partirPalabra(palabra){
+    const trozos = [];
+    let actual = '';
+    for(const ch of Array.from(palabra)){
+      if(actual === '' || ctx.measureText(actual + ch).width < maxWidth){
+        actual += ch;
       } else {
-        lineas.push(linea);
-        linea = palabras[i].trim();
+        trozos.push(actual);
+        actual = ch;
       }
     }
-    if(linea) lineas.push(linea);
+    if(actual) trozos.push(actual);
+    return trozos;
+  }
+
+  texto.split('\n').forEach(p => {
+    let linea = '';
+    p.split(' ').forEach(palabra => {
+      const prueba = linea ? linea + ' ' + palabra : palabra;
+      if(ctx.measureText(prueba).width < maxWidth){
+        linea = prueba;
+      } else {
+        if(linea) lineas.push(linea);
+        const trozos = partirPalabra(palabra);
+        trozos.slice(0, -1).forEach(t => lineas.push(t));
+        linea = trozos[trozos.length - 1];
+      }
+    });
+    lineas.push(linea);
   });
 
   const espacio = tamano * 1.4;
