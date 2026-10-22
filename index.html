@@ -1,114 +1,340 @@
-<!-- Versión 1.0 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reproductor Full Música - Versión 1.0</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #121212; color: #fff; margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        h1 { text-align: center; color: #1db954; font-size: 24px; }
-        audio { width: 100%; margin: 20px 0; outline: none; }
-        ul { list-style: none; padding: 0; max-height: 350px; overflow-y: auto; }
-        li { padding: 12px; margin-bottom: 8px; background: #2a2a2a; border-radius: 5px; cursor: pointer; transition: background 0.2s; font-size: 14px; }
-        li:hover { background: #333; }
-        li.active { background: #1db954; color: #000; font-weight: bold; }
-        .status { text-align: center; color: #ff5555; margin: 20px 0; font-size: 14px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f97316">
+<title>Mauricio V1.2</title>
+<style>
+*{box-sizing:border-box}
+:root{--naranja:#f97316;--naranja-osc:#c2410c;--fondo:#fff7ed;--card:#ffffff;--borde:#fed7aa;--texto:#431407}
+body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:var(--fondo);color:var(--texto);min-height:100vh;padding:14px;padding-top:calc(14px + env(safe-area-inset-top,0px));padding-bottom:calc(30px + env(safe-area-inset-bottom,0px))}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.logo{font-size:20px;font-weight:700;color:var(--naranja-osc)}
+.header-botones{display:flex;gap:8px}
+.btn-icono{background:var(--card);border:1px solid var(--borde);color:var(--naranja-osc);border-radius:10px;padding:8px 12px;font-size:15px;cursor:pointer}
+.card{background:var(--card);border:1px solid var(--borde);border-radius:14px;padding:12px;margin-bottom:12px}
+.etq{font-size:13px;color:#9a3412;display:block;margin-bottom:6px;font-weight:600}
+textarea{width:100%;height:120px;border:1px solid var(--borde);border-radius:10px;padding:12px;font-size:17px;resize:none;font-family:inherit;background:#fffbf5;color:var(--texto)}
+.swatches{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sw{width:34px;height:34px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--borde);cursor:pointer;padding:0}
+.sw.activo{box-shadow:0 0 0 3px var(--naranja)}
+input[type=color]{width:34px;height:34px;border:none;padding:0;background:none;cursor:pointer}
+.vista{text-align:center;min-height:60px}
+.vista-vacia{font-size:14px;color:#c2410c;opacity:.7;padding:20px 0}
+#preview{max-width:100%;display:none;border-radius:12px;margin:0 auto;box-shadow:0 4px 12px rgba(67,20,7,.2)}
+.acciones{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:600;cursor:pointer}
+.btn-comp{background:var(--naranja);color:#fff}
+.btn-desc{background:#fff;color:var(--naranja-osc);border:1px solid var(--naranja)}
+.btn-limp{grid-column:1/-1;background:#fee2e2;color:#b91c1c}
+.overlay{display:none;position:fixed;inset:0;background:rgba(67,20,7,.35);z-index:50}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--fondo);border-radius:18px 18px 0 0;padding:16px;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));max-height:85vh;overflow-y:auto}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.sheet-titulo{font-size:18px;font-weight:700;color:var(--naranja-osc)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.campo{display:flex;flex-direction:column;gap:6px}
+select,input[type=text]{width:100%;padding:10px;border:1px solid var(--borde);border-radius:10px;font-size:15px;background:#fff;color:var(--texto)}
+.btn-listo{width:100%;background:var(--naranja);color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:600;cursor:pointer}
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>Full Música (v1.0)</h1>
-        <audio id="audioPlayer" controls></audio>
-        <div id="status" class="status">Conectando a Google Drive...</div>
-        <ul id="playlist"></ul>
+
+<div class="header">
+  <div class="logo">Mauricio V1.2</div>
+  <div class="header-botones">
+    <button class="btn-icono" id="btnFS" onclick="toggleFS()">Pantalla completa</button>
+    <button class="btn-icono" onclick="abrirMenu(true)" aria-label="Configuración">⚙</button>
+  </div>
+</div>
+
+<div class="card">
+  <label class="etq" for="texto">Tu mensaje</label>
+  <textarea id="texto" placeholder="Escribe tu mensaje aquí..."></textarea>
+</div>
+
+<div class="card">
+  <label class="etq">Color del texto</label>
+  <div class="swatches" id="swatches">
+    <button class="sw" data-color="#00FF00" style="background:#00FF00" aria-label="Verde"></button>
+    <button class="sw" data-color="#ef4444" style="background:#ef4444" aria-label="Rojo"></button>
+    <button class="sw" data-color="#ffffff" style="background:#ffffff" aria-label="Blanco"></button>
+    <button class="sw" data-color="#facc15" style="background:#facc15" aria-label="Amarillo"></button>
+    <button class="sw" data-color="#3b82f6" style="background:#3b82f6" aria-label="Azul"></button>
+    <button class="sw" data-color="#f97316" style="background:#f97316" aria-label="Naranja"></button>
+    <input type="color" id="color" value="#00FF00" aria-label="Otro color">
+  </div>
+</div>
+
+<div class="card vista" id="vista">
+  <div class="vista-vacia" id="vacia">Escribe algo para ver la imagen aquí</div>
+  <img id="preview" alt="Vista previa de la imagen">
+</div>
+
+<div class="acciones" id="acciones">
+  <button class="btn btn-comp" onclick="compartir()">Compartir</button>
+  <button class="btn btn-desc" onclick="descargar()">Descargar</button>
+  <button class="btn btn-limp" onclick="limpiarTodo()">Limpiar todo</button>
+</div>
+
+<canvas id="canvas" style="display:none"></canvas>
+
+<div class="overlay" id="overlay" onclick="if(event.target===this)abrirMenu(false)">
+  <div class="sheet">
+    <div class="sheet-head">
+      <span class="sheet-titulo">Configuración</span>
+      <button class="btn-icono" onclick="abrirMenu(false)" aria-label="Cerrar">✕</button>
     </div>
 
-    <script>
-        const API_KEY = 'AIzaSyCtofsVSDO6Jf1Tclddjn95CknLg01Tp7M';
-        const FOLDER_ID = '0B_fjnoyvEhIhS0NuLTJxM3liYmc';
-        const RESOURCE_KEY = '0-k-vvNDkgJSITaWWPhHmtOg';
-        
-        const audioPlayer = document.getElementById('audioPlayer');
-        const playlistEl = document.getElementById('playlist');
-        const statusEl = document.getElementById('status');
-        
-        let tracks = [];
-        let currentIndex = 0;
+    <div class="campo" style="margin-bottom:14px">
+      <label class="etq" for="customSignature">Firma / Nombre</label>
+      <input type="text" id="customSignature" placeholder="Escribe tu nombre aquí">
+    </div>
 
-        async function fetchMusic() {
-            try {
-                statusEl.innerText = 'Cargando canciones...';
-                const url = `https://www.googleapis.com/drive/v3/files?q='${FOLDER_ID}'+in+parents+and+trashed=false&key=${API_KEY}&fields=files(id,name,mimeType)`;
-                
-                const response = await fetch(url, {
-                    headers: {
-                        'X-Goog-Drive-Resource-Keys': `${FOLDER_ID}/${RESOURCE_KEY}`
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.error) {
-                    statusEl.innerText = 'Error de API: ' + data.error.message;
-                    return;
-                }
-                
-                if (data.files) {
-                    tracks = data.files.filter(file => file.mimeType.startsWith('audio/') || file.name.match(/\.(mp3|m4a|wav|aac)$/i));
-                    if (tracks.length === 0 && data.files.length > 0) {
-                        tracks = data.files; // Si no detecta tipo audio exacto, toma todos
-                    }
-                    
-                    if (tracks.length === 0) {
-                        statusEl.innerText = 'La carpeta está vacía o Google Drive no permite leerla.';
-                        return;
-                    }
-                    
-                    statusEl.innerText = '';
-                    renderPlaylist();
-                    loadTrack(0);
-                } else {
-                    statusEl.innerText = 'No se encontraron archivos en la respuesta.';
-                }
-            } catch (error) {
-                statusEl.innerText = 'Error de red o conexión.';
-                console.error(error);
-            }
-        }
+    <div class="grid2">
+      <div class="campo">
+        <label class="etq" for="grosor">Grosor</label>
+        <select id="grosor">
+          <option value="300">Fino</option>
+          <option value="400">Normal</option>
+          <option value="700">Negrita</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label class="etq" for="alineacion">Alineación</label>
+        <select id="alineacion">
+          <option value="left">Izquierda</option>
+          <option value="center">Centro</option>
+          <option value="right">Derecha</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label class="etq" for="fondo">Fondo</label>
+        <select id="fondo">
+          <option value="oscuro">Negro</option>
+          <option value="blanco">Blanco</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label class="etq" for="fuente">Fuente</label>
+        <select id="fuente">
+          <option value="sans-serif">Normal</option>
+          <option value="monospace">Mono</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label class="etq" for="tamano">Tamaño</label>
+        <select id="tamano">
+          <option value="28">Chico</option>
+          <option value="36">Mediano</option>
+          <option value="46">Grande</option>
+        </select>
+      </div>
+    </div>
 
-        function renderPlaylist() {
-            playlistEl.innerHTML = '';
-            tracks.forEach((track, index) => {
-                const li = document.createElement('li');
-                li.innerText = track.name;
-                li.onclick = () => loadTrack(index, true);
-                playlistEl.appendChild(li);
-            });
-        }
+    <button class="btn-listo" onclick="abrirMenu(false)">Listo</button>
+  </div>
+</div>
 
-        function loadTrack(index, play = false) {
-            currentIndex = index;
-            const track = tracks[index];
-            audioPlayer.src = `https://www.googleapis.com/drive/v3/files/${track.id}?alt=media&key=${API_KEY}`;
-            
-            document.querySelectorAll('#playlist li').forEach((el, i) => {
-                el.classList.toggle('active', i === currentIndex);
-            });
+<script>
+const $ = id => document.getElementById(id);
+const CLAVES = ['texto','color','alineacion','fondo','fuente','grosor','tamano','customSignature'];
+const DEFECTOS = {color:'#00FF00', grosor:'300', tamano:'36', alineacion:'left', fondo:'oscuro', fuente:'sans-serif'};
+const ESCALA = 3;
 
-            if (play) {
-                audioPlayer.play();
-            }
-        }
+function guardar(id){ try{ localStorage.setItem('wa_'+id, $(id).value); }catch(e){} }
 
-        audioPlayer.onended = () => {
-            if (currentIndex + 1 < tracks.length) {
-                loadTrack(currentIndex + 1, true);
-            }
-        };
+CLAVES.forEach(id => {
+  const el = $(id);
+  let v = null;
+  try{ v = localStorage.getItem('wa_'+id); }catch(e){}
+  if(v !== null) el.value = v.replace(/[<>]/g,'');
+  else if(DEFECTOS[id] !== undefined) el.value = DEFECTOS[id];
+  el.addEventListener('input', () => { guardar(id); actualizar(); });
+});
 
-        fetchMusic();
-    </script>
+function marcarSwatch(){
+  document.querySelectorAll('.sw').forEach(b => {
+    b.classList.toggle('activo', b.dataset.color.toLowerCase() === $('color').value.toLowerCase());
+  });
+}
+
+document.querySelectorAll('.sw').forEach(b => {
+  b.addEventListener('click', () => {
+    $('color').value = b.dataset.color;
+    guardar('color');
+    marcarSwatch();
+    actualizar();
+  });
+});
+
+function abrirMenu(abrir){
+  $('overlay').style.display = abrir ? 'block' : 'none';
+}
+
+function toggleFS(){
+  const btn = $('btnFS');
+  if(!document.fullscreenElement){
+    if(document.documentElement.requestFullscreen){
+      document.documentElement.requestFullscreen().catch(()=>{});
+    }
+  } else {
+    document.exitFullscreen().catch(()=>{});
+  }
+}
+document.addEventListener('fullscreenchange', () => {
+  $('btnFS').textContent = document.fullscreenElement ? 'Salir de completa' : 'Pantalla completa';
+});
+
+// Dibuja el mensaje en el canvas. Devuelve el canvas o null si no hay texto.
+function dibujar(){
+  const texto = $('texto').value;
+  if(!texto.trim()) return null;
+
+  const canvas = $('canvas');
+  const ctx = canvas.getContext('2d');
+  const color = $('color').value;
+  const fondo = $('fondo').value;
+  const alineacion = $('alineacion').value;
+  const fuente = $('fuente').value;
+  const grosor = $('grosor').value;
+  const tamano = parseInt($('tamano').value);
+  const firma = $('customSignature').value.trim() || 'Mauricio';
+
+  const maxWidth = 560;
+  const margenLados = 65;
+  const espacioRaya = 18;
+  const anchoRaya = 6;
+  const margenArriba = 60;
+  const margenAbajo = 80;
+
+  // Ajuste de líneas (misma lógica de siempre)
+  ctx.font = `${grosor} ${tamano}px ${fuente}`;
+  let lineas = [];
+
+  // Si una palabra (link, emoji, etc.) es más ancha que la imagen, la corta por letras
+  function partirPalabra(palabra){
+    const trozos = [];
+    let actual = '';
+    for(const ch of Array.from(palabra)){
+      if(actual === '' || ctx.measureText(actual + ch).width < maxWidth){
+        actual += ch;
+      } else {
+        trozos.push(actual);
+        actual = ch;
+      }
+    }
+    if(actual) trozos.push(actual);
+    return trozos;
+  }
+
+  texto.split('\n').forEach(p => {
+    let linea = '';
+    p.split(' ').forEach(palabra => {
+      const prueba = linea ? linea + ' ' + palabra : palabra;
+      if(ctx.measureText(prueba).width < maxWidth){
+        linea = prueba;
+      } else {
+        if(linea) lineas.push(linea);
+        const trozos = partirPalabra(palabra);
+        trozos.slice(0, -1).forEach(t => lineas.push(t));
+        linea = trozos[trozos.length - 1];
+      }
+    });
+    lineas.push(linea);
+  });
+
+  const espacio = tamano * 1.4;
+  const altoTexto = lineas.length * espacio;
+  const W = maxWidth + margenLados * 2;
+  const H = margenArriba + altoTexto + margenAbajo;
+
+  // Resolución alta para que WhatsApp no la deje borrosa
+  canvas.width = W * ESCALA;
+  canvas.height = H * ESCALA;
+  ctx.setTransform(ESCALA, 0, 0, ESCALA, 0, 0);
+  ctx.textBaseline = 'top';
+
+  ctx.fillStyle = fondo === 'blanco' ? '#FFFFFF' : '#000000';
+  ctx.fillRect(0, 0, W, H);
+
+  // Firma abajo
+  ctx.font = 'bold 17px sans-serif';
+  ctx.fillStyle = fondo === 'blanco' ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.85)';
+  ctx.fillText(firma, margenLados, H - 30);
+
+  // Raya vertical de color
+  ctx.fillStyle = color;
+  ctx.fillRect(margenLados - espacioRaya - anchoRaya, margenArriba, anchoRaya, altoTexto);
+
+  // Texto
+  ctx.font = `${grosor} ${tamano}px ${fuente}`;
+  ctx.fillStyle = color;
+  lineas.forEach((linea, i) => {
+    const ancho = ctx.measureText(linea).width;
+    let x = margenLados;
+    if(alineacion === 'center') x = W / 2 - ancho / 2;
+    if(alineacion === 'right') x = W - margenLados - ancho;
+    ctx.fillText(linea, x, margenArriba + i * espacio);
+  });
+
+  return canvas;
+}
+
+function actualizar(){
+  const canvas = dibujar();
+  const preview = $('preview');
+  const vacia = $('vacia');
+  if(!canvas){
+    preview.style.display = 'none';
+    vacia.style.display = 'block';
+    return;
+  }
+  preview.src = canvas.toDataURL('image/png');
+  preview.style.display = 'inline-block';
+  vacia.style.display = 'none';
+}
+
+function aBlob(cb){
+  const canvas = dibujar();
+  if(!canvas) return;
+  canvas.toBlob(cb, 'image/png', 1.0);
+}
+
+function descargar(){
+  aBlob(blob => {
+    if(!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mensaje.png';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+}
+
+function compartir(){
+  aBlob(blob => {
+    if(!blob) return;
+    const archivo = new File([blob], 'mensaje.png', { type: 'image/png' });
+    if(navigator.share && navigator.canShare && navigator.canShare({ files: [archivo] })){
+      navigator.share({ title: 'Mensaje', files: [archivo] }).catch(()=>{});
+    } else {
+      // Si el celular no permite compartir, se descarga la imagen
+      descargar();
+    }
+  });
+}
+
+function limpiarTodo(){
+  $('texto').value = '';
+  guardar('texto');
+  actualizar();
+}
+
+window.addEventListener('load', () => { marcarSwatch(); actualizar(); });
+</script>
 </body>
 </html>
