@@ -1,9 +1,10 @@
+<!-- Versión 1.0 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reproductor Full Música</title>
+    <title>Reproductor Full Música - Versión 1.0</title>
     <style>
         body { font-family: Arial, sans-serif; background: #121212; color: #fff; margin: 0; padding: 20px; }
         .container { max-width: 600px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
@@ -13,14 +14,14 @@
         li { padding: 12px; margin-bottom: 8px; background: #2a2a2a; border-radius: 5px; cursor: pointer; transition: background 0.2s; font-size: 14px; }
         li:hover { background: #333; }
         li.active { background: #1db954; color: #000; font-weight: bold; }
-        .loading { text-align: center; color: #888; margin: 20px 0; }
+        .status { text-align: center; color: #ff5555; margin: 20px 0; font-size: 14px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Full Música</h1>
+        <h1>Full Música (v1.0)</h1>
         <audio id="audioPlayer" controls></audio>
-        <div id="loading" class="loading">Cargando canciones...</div>
+        <div id="status" class="status">Conectando a Google Drive...</div>
         <ul id="playlist"></ul>
     </div>
 
@@ -31,34 +32,48 @@
         
         const audioPlayer = document.getElementById('audioPlayer');
         const playlistEl = document.getElementById('playlist');
-        const loadingEl = document.getElementById('loading');
+        const statusEl = document.getElementById('status');
         
         let tracks = [];
         let currentIndex = 0;
 
         async function fetchMusic() {
             try {
+                statusEl.innerText = 'Cargando canciones...';
                 const url = `https://www.googleapis.com/drive/v3/files?q='${FOLDER_ID}'+in+parents+and+trashed=false&key=${API_KEY}&fields=files(id,name,mimeType)`;
+                
                 const response = await fetch(url, {
                     headers: {
                         'X-Goog-Drive-Resource-Keys': `${FOLDER_ID}/${RESOURCE_KEY}`
                     }
                 });
+                
                 const data = await response.json();
+                
+                if (data.error) {
+                    statusEl.innerText = 'Error de API: ' + data.error.message;
+                    return;
+                }
                 
                 if (data.files) {
                     tracks = data.files.filter(file => file.mimeType.startsWith('audio/') || file.name.match(/\.(mp3|m4a|wav|aac)$/i));
+                    if (tracks.length === 0 && data.files.length > 0) {
+                        tracks = data.files; // Si no detecta tipo audio exacto, toma todos
+                    }
+                    
                     if (tracks.length === 0) {
-                        tracks = data.files;
+                        statusEl.innerText = 'La carpeta está vacía o Google Drive no permite leerla.';
+                        return;
                     }
+                    
+                    statusEl.innerText = '';
                     renderPlaylist();
-                    if (tracks.length > 0) {
-                        loadTrack(0);
-                    }
+                    loadTrack(0);
+                } else {
+                    statusEl.innerText = 'No se encontraron archivos en la respuesta.';
                 }
-                loadingEl.style.display = 'none';
             } catch (error) {
-                loadingEl.innerText = 'Error al cargar la música.';
+                statusEl.innerText = 'Error de red o conexión.';
                 console.error(error);
             }
         }
