@@ -27,6 +27,7 @@
     <script>
         const API_KEY = 'AIzaSyCtofsVSDO6Jf1Tclddjn95CknLg01Tp7M';
         const FOLDER_ID = '0B_fjnoyvEhIhS0NuLTJxM3liYmc';
+        const RESOURCE_KEY = '0-k-vvNDkgJSITaWWPhHmtOg';
         
         const audioPlayer = document.getElementById('audioPlayer');
         const playlistEl = document.getElementById('playlist');
@@ -38,7 +39,11 @@
         async function fetchMusic() {
             try {
                 const url = `https://www.googleapis.com/drive/v3/files?q='${FOLDER_ID}'+in+parents+and+trashed=false&key=${API_KEY}&fields=files(id,name,mimeType)`;
-                const response = await fetch(url);
+                const response = await fetch(url, {
+                    headers: {
+                        'X-Goog-Drive-Resource-Keys': `${FOLDER_ID}/${RESOURCE_KEY}`
+                    }
+                });
                 const data = await response.json();
                 
                 if (data.files) {
